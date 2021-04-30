@@ -1,6 +1,6 @@
-Shader "Unlit/sdCircle"
+Shader "Unlit/sdArc"
 {
-    Properties
+     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
     }
@@ -42,17 +42,18 @@ Shader "Unlit/sdCircle"
 
             half4 frag (v2f i) : SV_Target
             {
-                float4 col = 0.;
+                float3 col = 0.;
                 float2 p = i.uv - 0.5;
-                p *= 3.0;
+                p *= 3.;
+
+                float time = _Time.y;
+    float ta = (0.5+0.5*cos(time*0.52+2.0));
+    float tb = (0.5+0.5*cos(time*0.31+2.0));
+    float rb = 0.15*(0.5+0.5*cos(time*0.41+3.0));
+	            float d = sdArc(p,0, 0.6, 1.0, 0.3);
                 
-                float d = sdCircle(p,0.5);
-                col.rgb = 1. - sign(d) * float3(0.1,0.4,0.7);
-                col.rgb *= 1.0 - exp(-5.0*abs(d));
-                col *= 0.8 + 0.2*cos(150.0*d + 15.0 * _Time.y);
-                col.rgb = lerp( 1.0, col.rgb, smoothstep(0.0,0.01,abs(d)) );
-                
-                return col;
+                col = DebugSDF2D(d);
+                return float4(col, 1.);
             }
             ENDCG
         }

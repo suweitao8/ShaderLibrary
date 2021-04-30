@@ -1,10 +1,7 @@
 // 反向点乘
-// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
-#pragma exclude_renderers d3d11 gles
-// Upgrade NOTE: excluded shader from DX11 because it uses wrong array syntax (type[size] name)
-#pragma exclude_renderers d3d11
 #define ndot(a, b) (a.x*b.x - a.y*b.y)
 #define dot2(a) dot(a, a)
+#define PI 3.1416
 
 // 圆形
 // r 半径
@@ -223,28 +220,31 @@ float sdStar5(in float2 p, in float r, in float rf)
     return length(p-ba*h) * sign(p.y*ba.x-p.x*ba.y);
 }
 
-// 七角星星
+// n角星星
 // r 半径
-// n todo
-// m todo
-float sdStar(in float2 p, in float r, in int n, in float m)
+// n 角数量
+// m 内陷程度 [2, n]
+float sdStar(in float2 p, in float r, in float n, in float m)
 {
-    // next 4 lines can be precomputed for a given shape
-    float an = 3.141593/float(n);
-    float en = 3.141593/m;  // m is between 2 and n
+    // these 4 lines can be precomputed for a given shape
+    float an = 3.141593/n;
+    float en = 3.141593/m;
     float2  acs = float2(cos(an),sin(an));
-    float2  ecs = float2(cos(en),sin(en)); // ecs=float2(0,1) for regular polygon
+    float2  ecs = float2(cos(en),sin(en)); // ecs=float2(0,1) and simplify, for regular polygon,
 
-    float bn = fmod(atan2(p.x,p.y),2.0*an) - an;
+    // reduce to first sector
+    float bn = abs(fmod(atan2(p.y,p.x),2.0*an)) - an;
     p = length(p)*float2(cos(bn),abs(sin(bn)));
+
+    // line sdf
     p -= r*acs;
     p += ecs*clamp( -dot(p,ecs), 0.0, r*acs.y/ecs.y);
     return length(p)*sign(p.x);
 }
 
 // 派
-// c todo
-// r todo
+// c 完整度 x=0 y=[-1, 1]
+// r 半径
 float sdPie( in float2 p, in float2 c, in float r )
 {
     p.x = abs(p.x);
@@ -254,12 +254,14 @@ float sdPie( in float2 p, in float2 c, in float r )
 }
 
 // 弧形
-// sca todo
-// scb todo
-// ra todo
-// rb todo
-float sdArc( in float2 p, in float2 sca, in float2 scb, in float ra, float rb )
+// a1 角度 [0, 1]
+// a2 弧度 [0, 1]
+// ra 半径
+// rb 线粗
+float sdArc( in float2 p, in float a1, in float a2, in float ra, float rb )
 {
+    float2 sca = float2(sin(PI * a1), cos(PI * a1));
+    float2 scb = float2(sin(PI * a2), cos(PI * a2));
     p = mul(float2x2(sca.x,sca.y,-sca.y,sca.x), p);
     p.x = abs(p.x);
     float k = (scb.y*p.x>scb.x*p.y) ? dot(p,scb) : length(p);
@@ -267,11 +269,12 @@ float sdArc( in float2 p, in float2 sca, in float2 scb, in float ra, float rb )
 }
 
 // 马蹄形
-// c todo
-// r todo
-// w todo
-float sdHorseshoe( in float2 p, in float2 c, in float r, in float2 w )
+// a 弧度 
+// r 半径
+// w x 长, y 粗
+float sdHorseshoe( in float2 p, in float a, in float r, in float2 w )
 {
+    float2 c = float2(cos(a * PI), sin(a * PI));
     p.x = abs(p.x);
     float l = length(p);
     p = mul(p, float2x2(-c.x, c.y, c.y, c.x));
@@ -282,8 +285,8 @@ float sdHorseshoe( in float2 p, in float2 c, in float r, in float2 w )
 }
 
 // 梭子
-// r todo
-// d todo
+// r 半径
+// d 间距
 float sdVesica(float2 p, float r, float d)
 {
     p = abs(p);
@@ -293,9 +296,9 @@ float sdVesica(float2 p, float r, float d)
 }
 
 // 月亮
-// d todo
-// ra todo
-// rb todo
+// d 两圆距离
+// ra 大圆半径
+// rb 小圆半径
 float sdMoon(float2 p, float d, float ra, float rb )
 {
     p.y = abs(p.y);
@@ -308,7 +311,7 @@ float sdMoon(float2 p, float d, float ra, float rb )
 }
 
 // 圆角十字形
-// h todo
+// h 高度
 float sdRoundedCross( in float2 p, in float h )
 {
     float k = 0.5*(h+1.0/h); // k should be const at modeling time
@@ -320,8 +323,8 @@ float sdRoundedCross( in float2 p, in float h )
 }
 
 // 鸡蛋
-// ra todo
-// rb todo
+// ra 下圆半径
+// rb 顶部尖锐程度 [0, ra]
 float sdEgg( in float2 p, in float ra, in float rb )
 {
     const float k = sqrt(3.0);

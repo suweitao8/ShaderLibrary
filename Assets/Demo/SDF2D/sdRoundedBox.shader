@@ -1,4 +1,4 @@
-Shader "Unlit/RounedCube2D"
+Shader "Unlit/sdRoundedBox"
 {
     Properties
     {

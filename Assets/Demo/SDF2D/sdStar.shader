@@ -1,4 +1,4 @@
-Shader "Unlit/sdCircle"
+Shader "Unlit/sdStar"
 {
     Properties
     {
@@ -42,17 +42,19 @@ Shader "Unlit/sdCircle"
 
             half4 frag (v2f i) : SV_Target
             {
-                float4 col = 0.;
+                float3 col = 0.;
                 float2 p = i.uv - 0.5;
-                p *= 3.0;
+                p *= 3.;
+
+                float t = _Time.y/3.0;
+                float n = 3.0 + fmod(floor(t),9.0);  // n, number of sides
+                float a = frac(t);                 // angle factor
+                float m = 2.0 + a*a*(n-2.0);        // angle divisor, between 2 and n
                 
-                float d = sdCircle(p,0.5);
-                col.rgb = 1. - sign(d) * float3(0.1,0.4,0.7);
-                col.rgb *= 1.0 - exp(-5.0*abs(d));
-                col *= 0.8 + 0.2*cos(150.0*d + 15.0 * _Time.y);
-                col.rgb = lerp( 1.0, col.rgb, smoothstep(0.0,0.01,abs(d)) );
+	            float d = sdStar( p, 0.7, 8, 2 );
+                col = DebugSDF2D(d);
                 
-                return col;
+                return float4(col, 1.);
             }
             ENDCG
         }

@@ -1,4 +1,4 @@
-Shader "Unlit/Box2D"
+Shader "Unlit/sdBox"
 {
     Properties
     {
@@ -48,6 +48,7 @@ Shader "Unlit/Box2D"
 
                 float2 ra = cos(_Time.y + float2(0., 1.)) * float2(0.5, 0.3) + float2(0.4, 0.4);
 	            float d = sdBox( p, ra);
+                
                 col = DebugSDF2D(d);
                 
                 return float4(col, 1.);
